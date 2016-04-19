@@ -65,6 +65,12 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
 
         IField<T> Field { get; }
 
+#if LOCALIZE
+        void SaveResources();
+
+        void Localize();
+#endif
+
         bool Active(T state);
 
         string Start(IDialogContext context, T state, FormState form);

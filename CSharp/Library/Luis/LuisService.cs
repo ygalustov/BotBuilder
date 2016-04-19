@@ -111,7 +111,7 @@ namespace Microsoft.Bot.Builder.Luis
             }
             catch (JsonException ex)
             {
-                throw new Exception("Unable to deserialize the LUIS response.", ex);
+                throw new ArgumentException("Unable to deserialize the LUIS response.", ex);
             }
         }
     }
@@ -124,6 +124,7 @@ namespace Microsoft.Bot.Builder.Luis
         /// <summary>
         /// Query the LUIS service using this text.
         /// </summary>
+        /// <param name="service">LUIS service.</param>
         /// <param name="text">The query text.</param>
         /// <returns>The LUIS result.</returns>
         public static async Task<LuisResult> QueryAsync(this ILuisService service, string text)

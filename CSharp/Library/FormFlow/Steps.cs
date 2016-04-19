@@ -42,6 +42,7 @@ using Microsoft.Bot.Builder.Dialogs;
 namespace Microsoft.Bot.Builder.FormFlow.Advanced
 {
     internal class FieldStep<T> : IStep<T>
+        where T: class
     {
         public FieldStep(string name, IForm<T> form)
         {
@@ -77,6 +78,18 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
                 return _field;
             }
         }
+
+#if LOCALIZE
+        public void SaveResources()
+        {
+            _field.SaveResources();
+        }
+
+        public void Localize()
+        {
+            _field.Localize();
+        }
+#endif
 
         public bool Active(T state)
         {
@@ -119,8 +132,6 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
 #endif
             return matches;
         }
-
-
 
         public async Task<StepResult> ProcessAsync(IDialogContext context, T state, FormState form, string input, IEnumerable<TermMatch> matches)
         {
@@ -465,6 +476,18 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
             }
         }
 
+#if LOCALIZE
+        public void SaveResources()
+        {
+            _field.SaveResources();
+        }
+
+        public void Localize()
+        {
+            _field.Localize();
+        }
+#endif
+
         public bool Active(T state)
         {
             return _field.Active(state);
@@ -537,6 +560,7 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
     }
 
     internal class NavigationStep<T> : IStep<T>
+        where T: class
     {
         public NavigationStep(string name, IForm<T> form, T state, FormState formState)
         {
@@ -634,6 +658,14 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
             return "* " + prompt.Prompt(state, _name, "* " + recognizer.Help(state, null), commandHelp);
         }
 
+        public void SaveResources()
+        {
+        }
+
+        public void Localize()
+        {
+        }
+
         public IEnumerable<string> Dependencies
         {
             get
@@ -653,7 +685,8 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
         public MessageStep(PromptAttribute prompt, ConditionalDelegate<T> condition, IForm<T> form)
         {
             _name = "message" + form.Steps.Count.ToString();
-            _prompt = new Prompter<T>(prompt, form, null);
+            _form = form;
+            _promptDefinition = prompt;
             _condition = (condition == null ? (state) => true : condition);
         }
 
@@ -703,7 +736,7 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
 
         public TemplateBaseAttribute Annotation
         {
-            get { return _prompt.Annotation; }
+            get { return _promptDefinition; }
         }
 
         public string NotUnderstood(IDialogContext context, T state, FormState form, string input)
@@ -719,7 +752,20 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
         public string Start(IDialogContext context, T state, FormState form)
         {
             form.SetPhase(StepPhase.Completed);
-            return _prompt.Prompt(state, "");
+            var prompt = new Prompter<T>(_promptDefinition, _form, null);
+            return prompt.Prompt(state, "");
+        }
+
+        public void SaveResources()
+        {
+            _form.Resources.Add(_name + ".PROMPT", _promptDefinition.Patterns);
+        }
+
+        public void Localize()
+        {
+            string[] patterns;
+            _form.Resources.LookupValues(_name + ".PROMPT", out patterns);
+            if (patterns != null) _promptDefinition.Patterns = patterns;
         }
 
         public StepType Type
@@ -731,7 +777,8 @@ namespace Microsoft.Bot.Builder.FormFlow.Advanced
         }
 
         private readonly string _name;
+        private readonly IForm<T> _form;
+        private readonly PromptAttribute _promptDefinition;
         private readonly ConditionalDelegate<T> _condition;
-        private readonly IPrompt<T> _prompt;
     }
 }

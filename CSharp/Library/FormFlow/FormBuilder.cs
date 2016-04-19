@@ -187,7 +187,7 @@ namespace Microsoft.Bot.Builder.FormFlow
                 }
                 dependencies = fields;
             }
-            var confirmation = new Confirmation<T>(prompt, condition, dependencies);
+            var confirmation = new Confirmation<T>(prompt, condition, dependencies, _form);
             confirmation.Form = _form;
             _form._fields.Add(confirmation);
             _form._steps.Add(new ConfirmStep<T>(confirmation));
@@ -277,9 +277,12 @@ namespace Microsoft.Bot.Builder.FormFlow
                 {
                     foreach (TemplateUsage usage in Enum.GetValues(typeof(TemplateUsage)))
                     {
-                        foreach (var pattern in step.Field.Template(usage).Patterns)
+                        if (usage != TemplateUsage.None)
                         {
-                            ValidatePattern(pattern, name, TemplateArgs(usage));
+                            foreach (var pattern in step.Field.Template(usage).Patterns)
+                            {
+                                ValidatePattern(pattern, name, TemplateArgs(usage));
+                            }
                         }
                     }
                 }
